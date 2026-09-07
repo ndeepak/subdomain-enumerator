@@ -1,23 +1,32 @@
 # Subdomain Enumerator
 
-A simple passive subdomain enumeration tool written in Python.
+A lightweight, passive subdomain discovery tool for authorized reconnaissance and asset discovery.
 
-It collects subdomains from:
+It pulls results from public certificate transparency data and, optionally, the SecurityTrails API, then normalizes and deduplicates the discovered hostnames into a clean output file.
 
-- SecurityTrails API (optional)
-- crt.sh / Certificate Transparency logs
-- Duplicate and wildcard cleanup
-- Plain-text output
+## Why use it
+
+- Fast and simple to run
+- Faithful to passive discovery workflows
+- No browser automation or noisy scanning
+- Produces a plain-text list of valid subdomains
+- Safe for open-source sharing with clear responsible-use guidance
+
+## Sources used
+
+- SecurityTrails API (optional, requires an API key)
+- crt.sh certificate transparency logs
+- Local validation and deduplication for clean output
 
 ## Features
 
-- Passive enumeration
-- SecurityTrails API support
-- crt.sh certificate-based discovery
-- Retry and exponential backoff for crt.sh
-- Duplicate removal
-- Domain validation
-- Simple `.txt` output
+- Passive subdomain enumeration
+- Optional SecurityTrails integration
+- crt.sh queries for certificate-based discovery
+- Retry, backoff, and rate-limit handling
+- Duplicate and wildcard cleanup
+- Domain validation for hostnames under the target domain
+- Output saved as a `.txt` file with one hostname per line
 
 ## Requirements
 
@@ -25,17 +34,27 @@ It collects subdomains from:
 - `requests`
 - `urllib3`
 
-Install dependencies:
+## Installation
+
+Clone the repo and install dependencies:
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/your-username/subdomain-enumerator.git
+cd subdomain-enumerator
+python -m pip install -r requirements.txt
 ```
 
-## SecurityTrails API Key
+Or install directly from source once the project metadata is available:
 
-Do **not** put API keys directly in the Python source code.
+```bash
+python -m pip install .
+```
 
-Set the API key as an environment variable.
+## Environment configuration
+
+Do not hardcode API keys into the script.
+
+Set the SecurityTrails key as an environment variable:
 
 Linux/macOS:
 
@@ -49,7 +68,7 @@ Windows PowerShell:
 $env:SECURITYTRAILS_API_KEY="YOUR_API_KEY"
 ```
 
-An example environment file is provided as `.env.example`.
+A template is included at `.env.example`.
 
 ## Usage
 
@@ -57,36 +76,74 @@ An example environment file is provided as `.env.example`.
 python getSubDomains.py example.com
 ```
 
+Optional custom output path:
+
+```bash
+python getSubDomains.py example.com -o output/example-domains.txt
+```
+
+Runtime controls are available when tuning requests for a specific environment:
+
+```bash
+python getSubDomains.py example.com --workers 4 --timeout 30 --retries 3
+python getSubDomains.py example.com --no-securitytrails
+```
+
+To run `gau` for multiple domains, place one domain per line in `all_domains.txt`.
+Blank lines and comments beginning with `#` are ignored:
+
+```bash
+python gau_batch.py --input all_domains.txt --output-dir gau-results --delay 60
+```
+
+The batch runner invokes `gau` without a shell, reports failed processes, and returns
+a non-zero exit status when any domain fails. Use `--gau-command` when the executable
+is not on `PATH`.
+
 Example output:
 
 ```text
-[+] Grabbing subdomains for example.com from SecurityTrails...
-[+] Grabbing subdomains from crt.sh (with unexpired certificates)...
-[+] Grabbing subdomains from crt.sh (all certificates)...
-[+] Cleaning and deduplicating results...
-
-42 unique subdomains found.
-Output written to: example.com.txt
+[2026-09-02 10:15:04] Starting subdomain enumeration for example.com...
+[2026-09-02 10:15:12] SecurityTrails: Found 12 new subdomains.
+[2026-09-02 10:15:17] crt.sh: Found 29 new subdomains.
+[2026-09-02 10:15:17] Cleaning and validating domain names...
+[2026-09-02 10:15:17] Complete! Found 41 unique subdomains in 13.2s.
+[2026-09-02 10:15:17] Results saved to example.com.txt
 ```
 
-## Output
+## Output format
 
-The tool creates:
+The tool writes a plain-text file named:
 
 ```text
 example.com.txt
 ```
 
-with one discovered hostname per line.
+Each line contains one valid subdomain, for example:
 
-Generated output files are excluded from Git using `.gitignore`.
+```text
+www.example.com
+api.example.com
+mail.example.com
+```
 
-## Responsible Use
+Generated output files are ignored by Git via `.gitignore`.
 
-This project is intended for authorized security testing, asset discovery, research, and reconnaissance of domains that are owned or explicitly authorized for testing.
+## Responsible use
 
-Only enumerate targets where permission has been granted.
+This project is intended for authorized security testing, asset discovery, research, and reconnaissance of domains owned by the user or explicitly authorized for testing.
+
+Do not use it against systems without permission. Unlawful or abusive use is strictly prohibited.
+
+## Contributing
+
+Contributions are welcome. If you would like to improve the tool, please:
+
+1. Open an issue to discuss the change
+2. Create a feature branch
+3. Keep the project focused, readable, and security-conscious
+4. Run the test suite before submitting a PR
 
 ## License
 
-MIT License
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
