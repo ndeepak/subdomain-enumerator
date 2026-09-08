@@ -40,6 +40,7 @@ Issues = "https://github.com/ndeepak/subdomain-enumerator/issues"
 
 [project.scripts]
 subdomain-enumerator = "getSubDomains:main"
+subdomain-probe = "probe_subdomains:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
