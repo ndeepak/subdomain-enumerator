@@ -23,10 +23,12 @@ It pulls results from public certificate transparency data and, optionally, the 
 - Passive subdomain enumeration
 - Optional SecurityTrails integration
 - crt.sh queries for certificate-based discovery
+- Concurrent HTTP(S) probing of discovered hosts
 - Retry, backoff, and rate-limit handling
 - Duplicate and wildcard cleanup
 - Domain validation for hostnames under the target domain
 - Output saved as a `.txt` file with one hostname per line
+- Optional live-service results saved as JSONL
 
 ## Requirements
 
@@ -99,6 +101,24 @@ python gau_batch.py --input all_domains.txt --output-dir gau-results --delay 60
 The batch runner invokes `gau` without a shell, reports failed processes, and returns
 a non-zero exit status when any domain fails. Use `--gau-command` when the executable
 is not on `PATH`.
+
+Probe the enumerator output for reachable HTTP(S) services:
+
+```bash
+python probe_subdomains.py --input example.com.txt --output live-hosts.jsonl --workers 20
+```
+
+The probe tries HTTPS first and falls back to HTTP when TLS is unavailable. It records
+the responding URL, redirect destination, status code, content type, page title, and
+response time. Use `--insecure` for authorized environments with self-signed certificates.
+The installed console command is also available:
+
+```bash
+subdomain-probe -i example.com.txt -o live-hosts.jsonl
+```
+
+Each output line is a JSON object. Hosts that do not respond include an `error` field;
+responsive hosts include `status_code` and metadata suitable for further filtering.
 
 Example output:
 
